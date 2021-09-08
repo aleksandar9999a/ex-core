@@ -4,7 +4,7 @@
 ExCore is TypeScript/JavaScript Library for to perform asynchronous tasks.
 </p>
 
-<br><br>
+<br>
 
 <h2 align="center">How to use</h2>
 
@@ -27,9 +27,7 @@ ExCore is TypeScript/JavaScript Library for to perform asynchronous tasks.
   })
 ```
 
-<p align="center">
 - ExCore execute tasks by priority (tasks with bigger priority are executed first)
 - ExCore set default priority 0 if you don't set it
 - ExCode has possibilities for callback functions
 - ExCode has auto|manual modes. If mode is manual you must call core.start() to process tasks
-</p>
