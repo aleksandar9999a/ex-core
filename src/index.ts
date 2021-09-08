@@ -75,15 +75,21 @@ export class ExCore {
     }
   }
 
-  start () {
-    this._isStarted = true;
-    this.processPromise = this.process();
-    return this.processPromise;
-  }
+  private executeTask (task: ExCoreTask) {
+    if (task.before) {
+      task.before(task);
+    }
 
-  stop () {
-    this._isStarted = false;
-    return this.processPromise;
+    const updatedTask = {
+      ...task,
+      result: task.fn()
+    }
+
+    if (task.after) {
+      task.after(updatedTask);
+    }
+
+    return Promise.resolve(updatedTask);
   }
 
   private process (results: ExCoreTaskResult[] = []): Promise<ExCoreTaskResult[]> {
@@ -99,44 +105,47 @@ export class ExCore {
     return Promise.resolve(this._queue.shift())
       .then((task: ExCoreTask|undefined) => {
         if (!task) {
-          return Promise.resolve(results);
+          return Promise.reject(new Error('Task is undefined!'));
         }
 
-        if (task.before) {
-          task.before(task);
-        }
-
-        const updatedTask = {
-          ...task,
-          result: task.fn()
-        }
-
-        results.push(updatedTask)
-
-        if (task.after) {
-          task.after(updatedTask);
-        }
-
-        return this.process(results)
+        return this.executeTask(task);
+      })
+      .then(task => {
+        results.push(task)
+        return this.process(results);
       })
   }
 
   private insertTask (task: ExCoreTask) {
-    if (this._queue.length <= 0) {
-      this._queue.push(task);
-      return this._queue;
-    }
+    return Promise.resolve(this._queue.length <= 0)
+      .then(hasTasks => {
+        if (!hasTasks) {
+          this._queue.push(task);
+          return Promise.resolve(task);
+        }
 
-    for (let i = 0; i < this._queue.length; i++) {
-      const nextTask = this._queue[i + 1];
+        for (let i = 0; i < this._queue.length; i++) {
+          const nextTask = this._queue[i + 1];
+    
+          if (!nextTask || nextTask.priority < task.priority) {
+            this._queue.splice(i, 0, task);
+            return Promise.resolve(task);
+          }
+        }
 
-      if (!nextTask || nextTask.priority < task.priority) {
-        this._queue.splice(i, 0, task);
-        return task;
-      }
-    }
+        return Promise.reject(new Error('Task is not inserted! I don\'t know why!'));
+      })
+  }
 
-    return null;
+  start () {
+    this._isStarted = true;
+    this.processPromise = this.process();
+    return this.processPromise;
+  }
+
+  stop () {
+    this._isStarted = false;
+    return this.processPromise;
   }
 
   push (task: Task): Promise<ExCoreTask> {
@@ -147,12 +156,13 @@ export class ExCore {
           : this.createAdvTask(task as ExCoreBaseTask)
       })
       .then(task => {
-        this.insertTask(task)
-
+        return this.insertTask(task);
+      })
+      .then(task => {
         if (this._config.mode === 'automatic' && !this._isStarted) {
           this.start();
         }
-
+  
         return task;
       })
   }
