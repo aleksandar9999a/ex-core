@@ -117,23 +117,25 @@ export class ExCore {
   }
 
   private insertTask (task: ExCoreTask) {
-    return Promise.resolve(this._queue.length <= 0)
-      .then(hasTasks => {
-        if (!hasTasks) {
-          this._queue.push(task);
-          return Promise.resolve(task);
-        }
+    return Promise.resolve()
+      .then(() => {
+        let isInserted = false;
 
         for (let i = 0; i < this._queue.length; i++) {
           const nextTask = this._queue[i + 1];
     
           if (!nextTask || nextTask.priority < task.priority) {
             this._queue.splice(i, 0, task);
-            return Promise.resolve(task);
+            isInserted = true;
+            break;
           }
         }
 
-        return Promise.reject(new Error('Task is not inserted! I don\'t know why!'));
+        if (!isInserted) {
+          this._queue.push(task);
+        }
+
+        return Promise.resolve(task);
       })
   }
 
