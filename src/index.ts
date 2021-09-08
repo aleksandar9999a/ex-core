@@ -21,7 +21,7 @@ export interface ExWorkerConfig {
 
 export type Task = (() => any)|ExWorkerBaseTask
 
-export class ExWorker {
+export default class ExWorker {
   private _isStarted: boolean;
   private _queue: ExWorkerTask[];
   private _config: ExWorkerConfig;
