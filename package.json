@@ -1,5 +1,5 @@
 {
-  "name": "ex-core",
+  "name": "ex-worker",
   "version": "1.0.0",
   "main": "index.js",
   "repository": "git@github.com:aleksandar9999a/ex-sequence.git",

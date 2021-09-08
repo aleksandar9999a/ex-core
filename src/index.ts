@@ -1,31 +1,31 @@
-interface ExCoreBaseTask {
+interface ExWorkerBaseTask {
   fn: () => any,
-  before?: (task: ExCoreTask) => void,
-  after?: (task: ExCoreTaskResult) => void,
+  before?: (task: ExWorkerTask) => void,
+  after?: (task: ExWorkerTaskResult) => void,
   priority?: number
 }
 
-interface ExCoreTask extends ExCoreBaseTask {
+interface ExWorkerTask extends ExWorkerBaseTask {
   id: number|string,
   priority: number,
   created: number
 }
 
-interface ExCoreTaskResult extends ExCoreTask {
+interface ExWorkerTaskResult extends ExWorkerTask {
   result: any
 }
 
-interface ExCoreConfig {
+interface ExWorkerConfig {
   mode: 'auto'|'manual'
 }
 
-type Task = (() => any)|ExCoreBaseTask
+type Task = (() => any)|ExWorkerBaseTask
 
-export class ExCore {
+export class ExWorker {
   private _isStarted: boolean;
-  private _queue: ExCoreTask[];
-  private _config: ExCoreConfig;
-  private processPromise: Promise<ExCoreTaskResult[]>|null;
+  private _queue: ExWorkerTask[];
+  private _config: ExWorkerConfig;
+  private processPromise: Promise<ExWorkerTaskResult[]>|null;
 
   get isStarted () {
     return this._isStarted;
@@ -39,7 +39,7 @@ export class ExCore {
     return this._queue;
   }
 
-  constructor (config: ExCoreConfig) {
+  constructor (config: ExWorkerConfig) {
     this._isStarted = false;
     this._queue = [];
     this._config = config;
@@ -57,7 +57,7 @@ export class ExCore {
     return stringArr.join('-');
   }
 
-  private createTask (fn: () => any): ExCoreTask {
+  private createTask (fn: () => any): ExWorkerTask {
     return {
       id: this.getID(),
       fn,
@@ -66,7 +66,7 @@ export class ExCore {
     }
   }
 
-  private createAdvTask (task: ExCoreBaseTask): ExCoreTask {
+  private createAdvTask (task: ExWorkerBaseTask): ExWorkerTask {
     return {
       ...task,
       id: this.getID(),
@@ -75,7 +75,7 @@ export class ExCore {
     }
   }
 
-  private executeTask (task: ExCoreTask) {
+  private executeTask (task: ExWorkerTask) {
     if (task.before) {
       task.before(task);
     }
@@ -92,7 +92,7 @@ export class ExCore {
     return Promise.resolve(updatedTask);
   }
 
-  private process (results: ExCoreTaskResult[] = []): Promise<ExCoreTaskResult[]> {
+  private process (results: ExWorkerTaskResult[] = []): Promise<ExWorkerTaskResult[]> {
     if (!this._isStarted) {
       return Promise.resolve(results);
     }
@@ -103,7 +103,7 @@ export class ExCore {
     }
 
     return Promise.resolve(this._queue.shift())
-      .then((task: ExCoreTask|undefined) => {
+      .then((task: ExWorkerTask|undefined) => {
         if (!task) {
           return Promise.reject(new Error('Task is undefined!'));
         }
@@ -116,7 +116,7 @@ export class ExCore {
       })
   }
 
-  private insertTask (task: ExCoreTask) {
+  private insertTask (task: ExWorkerTask) {
     return Promise.resolve()
       .then(() => {
         let isInserted = false;
@@ -147,7 +147,7 @@ export class ExCore {
 
   stop () {
     this._isStarted = false;
-    return this.processPromise || Promise.resolve([] as ExCoreTask[]);
+    return this.processPromise || Promise.resolve([] as ExWorkerTask[]);
   }
 
   remove (id: string) {
@@ -165,12 +165,12 @@ export class ExCore {
       })
   }
 
-  push (task: Task): Promise<ExCoreTask> {
+  push (task: Task): Promise<ExWorkerTask> {
     return Promise.resolve(typeof task === 'function')
       .then(isFn => {
         return isFn
           ? this.createTask(task as () => any)
-          : this.createAdvTask(task as ExCoreBaseTask)
+          : this.createAdvTask(task as ExWorkerBaseTask)
       })
       .then(task => {
         return this.insertTask(task);
