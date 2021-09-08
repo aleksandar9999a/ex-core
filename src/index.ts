@@ -16,7 +16,7 @@ interface ExCoreTaskResult extends ExCoreTask {
 }
 
 interface ExCoreConfig {
-  mode: 'automatic'|'manual'
+  mode: 'auto'|'manual'
 }
 
 type Task = (() => any)|ExCoreBaseTask
@@ -176,7 +176,7 @@ export class ExCore {
         return this.insertTask(task);
       })
       .then(task => {
-        if (this._config.mode === 'automatic' && !this._isStarted) {
+        if (this._config.mode === 'auto' && !this._isStarted) {
           this.start();
         }
   
