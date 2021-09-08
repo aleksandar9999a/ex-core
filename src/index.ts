@@ -1,30 +1,31 @@
-interface ExSequenceBaseTask {
+interface ExCoreBaseTask {
   fn: () => any,
-  before?: (task: ExSequenceTask) => void,
-  after?: (task: ExSequenceTaskResult) => void,
+  before?: (task: ExCoreTask) => void,
+  after?: (task: ExCoreTaskResult) => void,
   priority?: number
 }
 
-interface ExSequenceTask extends ExSequenceBaseTask {
+interface ExCoreTask extends ExCoreBaseTask {
   id: number|string,
-  priority: number
+  priority: number,
+  created: number
 }
 
-interface ExSequenceTaskResult extends ExSequenceTask {
+interface ExCoreTaskResult extends ExCoreTask {
   result: any
 }
 
-interface ExSequenceConfig {
+interface ExCoreConfig {
   mode: 'automatic'|'manual'
 }
 
-type Task = (() => any)|ExSequenceBaseTask
+type Task = (() => any)|ExCoreBaseTask
 
-export class ExSequence {
+export class ExCore {
   private _isStarted: boolean;
-  private _queue: ExSequenceTask[];
-  private _config: ExSequenceConfig;
-  private processPromise: Promise<ExSequenceTaskResult[]>|null;
+  private _queue: ExCoreTask[];
+  private _config: ExCoreConfig;
+  private processPromise: Promise<ExCoreTaskResult[]>|null;
 
   get isStarted () {
     return this._isStarted;
@@ -38,7 +39,7 @@ export class ExSequence {
     return this._queue;
   }
 
-  constructor (config: ExSequenceConfig) {
+  constructor (config: ExCoreConfig) {
     this._isStarted = false;
     this._queue = [];
     this._config = config;
@@ -56,19 +57,21 @@ export class ExSequence {
     return stringArr.join('-');
   }
 
-  private createTask (fn: () => any): ExSequenceTask {
+  private createTask (fn: () => any): ExCoreTask {
     return {
       id: this.getID(),
       fn,
-      priority: 0
+      priority: 0,
+      created: new Date().getTime()
     }
   }
 
-  private createAdvTask (task: ExSequenceBaseTask): ExSequenceTask {
+  private createAdvTask (task: ExCoreBaseTask): ExCoreTask {
     return {
       ...task,
       id: this.getID(),
-      priority: task.priority || 0
+      priority: task.priority || 0,
+      created: new Date().getTime()
     }
   }
 
@@ -83,7 +86,7 @@ export class ExSequence {
     return this.processPromise;
   }
 
-  private process (results: ExSequenceTaskResult[] = []): Promise<ExSequenceTaskResult[]> {
+  private process (results: ExCoreTaskResult[] = []): Promise<ExCoreTaskResult[]> {
     if (!this._isStarted) {
       return Promise.resolve(results);
     }
@@ -94,7 +97,7 @@ export class ExSequence {
     }
 
     return Promise.resolve(this._queue.shift())
-      .then((task: ExSequenceTask|undefined) => {
+      .then((task: ExCoreTask|undefined) => {
         if (!task) {
           return Promise.resolve(results);
         }
@@ -118,15 +121,33 @@ export class ExSequence {
       })
   }
 
-  push (task: Task): Promise<ExSequenceTask> {
+  private insertTask (task: ExCoreTask) {
+    if (this._queue.length <= 0) {
+      this._queue.push(task);
+      return this._queue;
+    }
+
+    for (let i = 0; i < this._queue.length; i++) {
+      const nextTask = this._queue[i + 1];
+
+      if (!nextTask || nextTask.priority < task.priority) {
+        this._queue.splice(i, 0, task);
+        return task;
+      }
+    }
+
+    return null;
+  }
+
+  push (task: Task): Promise<ExCoreTask> {
     return Promise.resolve(typeof task === 'function')
       .then(isFn => {
         return isFn
           ? this.createTask(task as () => any)
-          : this.createAdvTask(task as ExSequenceBaseTask)
+          : this.createAdvTask(task as ExCoreBaseTask)
       })
       .then(task => {
-        this._queue.push(task);
+        this.insertTask(task)
 
         if (this._config.mode === 'automatic' && !this._isStarted) {
           this.start();
