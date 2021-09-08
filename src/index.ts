@@ -145,7 +145,22 @@ export class ExCore {
 
   stop () {
     this._isStarted = false;
-    return this.processPromise;
+    return this.processPromise || Promise.resolve([] as ExCoreTask[]);
+  }
+
+  remove (id: string) {
+    const wasItStarted = this._isStarted;
+
+    return this.stop()
+      .then(() => {
+        this._queue = this._queue.filter(x => x.id !== id)
+
+        if (wasItStarted) {
+          return this.start();
+        }
+
+        return Promise.resolve(this._queue);
+      })
   }
 
   push (task: Task): Promise<ExCoreTask> {
