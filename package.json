@@ -1,6 +1,6 @@
 {
   "name": "ex-worker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "index.js",
   "repository": "git@github.com:aleksandar9999a/ex-sequence.git",
   "author": "alexander <aleksander9999a@gmail.com>",
