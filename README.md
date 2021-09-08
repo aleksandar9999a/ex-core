@@ -9,7 +9,7 @@ ExWorker is TypeScript/JavaScript Library for to perform asynchronous tasks.
 <h2 align="center">How to use</h2>
 
 ```javascript
-  import { ExWorker } from 'ex-worker';
+  import ExWorker from 'ex-worker';
 
   const core = new ExWorker({ mode: 'auto' });
 
