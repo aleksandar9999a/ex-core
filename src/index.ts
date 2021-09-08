@@ -1,25 +1,25 @@
-interface ExWorkerBaseTask {
+export interface ExWorkerBaseTask {
   fn: () => any,
   before?: (task: ExWorkerTask) => void,
   after?: (task: ExWorkerTaskResult) => void,
   priority?: number
 }
 
-interface ExWorkerTask extends ExWorkerBaseTask {
+export interface ExWorkerTask extends ExWorkerBaseTask {
   id: number|string,
   priority: number,
   created: number
 }
 
-interface ExWorkerTaskResult extends ExWorkerTask {
+export interface ExWorkerTaskResult extends ExWorkerTask {
   result: any
 }
 
-interface ExWorkerConfig {
+export interface ExWorkerConfig {
   mode: 'auto'|'manual'
 }
 
-type Task = (() => any)|ExWorkerBaseTask
+export type Task = (() => any)|ExWorkerBaseTask
 
 export class ExWorker {
   private _isStarted: boolean;
