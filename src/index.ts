@@ -19,6 +19,10 @@ export interface ExWorkerConfig {
   mode: 'auto'|'manual'
 }
 
+export interface ExWorkerConfigUpdate {
+  mode?: 'auto'|'manual'
+}
+
 export type Task = (() => any)|ExWorkerBaseTask
 
 export default class ExWorker {
@@ -76,18 +80,14 @@ export default class ExWorker {
   }
 
   private executeTask (task: ExWorkerTask) {
-    if (task.before) {
-      task.before(task);
-    }
+    typeof task.before === 'function' && task.before(task);
 
     const updatedTask = {
       ...task,
       result: task.fn()
     }
 
-    if (task.after) {
-      task.after(updatedTask);
-    }
+    typeof task.after === 'function' && task.after(updatedTask);
 
     return Promise.resolve(updatedTask);
   }
@@ -137,6 +137,19 @@ export default class ExWorker {
 
         return Promise.resolve(task);
       })
+  }
+
+  updateConfig (update: ExWorkerConfigUpdate) {
+    this._config = {
+      ...this._config,
+      ...update
+    }
+
+    if (!this._config.mode) {
+      this._config.mode = 'manual';
+    }
+
+    return this.config;
   }
 
   start () {
