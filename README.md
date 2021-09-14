@@ -29,5 +29,5 @@ ExWorker is TypeScript/JavaScript Library for to perform asynchronous tasks.
 
 - ExWorker execute tasks by priority (tasks with bigger priority are executed first)
 - ExWorker set default priority 0 if you don't set it
-- ExCode has possibilities for callback functions
-- ExCode has auto|manual modes. If mode is manual you must call core.start() to process tasks
+- ExWorker has possibilities for callback functions
+- ExWorker has auto|manual modes. If mode is manual you must call core.start() to process tasks
